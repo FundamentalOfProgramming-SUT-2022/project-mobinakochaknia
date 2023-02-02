@@ -2,9 +2,25 @@
 #include<string.h>
 #include<stdlib.h>
 #include<sys/stat.h>
-
+#include<dirent.h>
+#include <errno.h>
 char *clipboard;
 int  position;
+
+
+int isFile(const char* name)
+{
+    DIR* directory = opendir(name);
+
+    if(directory != NULL)
+    {
+        closedir(directory);
+        return 0;
+    }
+
+        return 1;
+
+}
 
 size_t getline(char **lineptr, size_t *n, FILE *stream) {
     char *bufptr = NULL;
@@ -581,10 +597,6 @@ char*  chang_filename_to_backupname(char filename[],char ans[])
 
 
 
-
-
-    strcat(ans,file);
-
     return ans;
 
 }
@@ -658,10 +670,51 @@ void undo(char filename[])
 
 }
 
-void 
+void tree(char path[],int tab_num)
+{
+    chdir(path);
+    struct dirent *de;
+    DIR* dir=opendir(".");
+
+
+    if (dir==NULL)
+    {
+        printf("nemitonm baz konm");
+        return ;
+    }
+    while((de=readdir(dir))!=NULL)
+    {
+
+        if (de->d_name[0]=='.')
+        {
+            continue;
+        }
+        else
+        {
+            for (int i=0;i<tab_num;i++)
+            {
+                printf("\t");
+            }
+            printf("%s\n", de->d_name);
+
+            if (isFile(de->d_name))
+            {
+
+                continue;
+            }
+
+            tree(de->d_name,tab_num+1);
+
+        }
+        chdir("..");
+
+    }
+
+    closedir(dir);
+}
 
 int main() {
-    char filename[]="/root/mff.txt";
+    char filename[]="/root/";
     char filename2[]="/root/test2.txt";
     char str[5]="slm";
     char a='f';
@@ -671,10 +724,8 @@ int main() {
     int makan=0 ;
     int size;
     char ans[1000];
-    create_backup(filename);
-
-
-
+   tree(filename,0);
+   
 }
 
 
