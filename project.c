@@ -2,8 +2,62 @@
 #include<string.h>
 #include<stdlib.h>
 #include<sys/stat.h>
+
 char *clipboard;
 int  position;
+
+size_t getline(char **lineptr, size_t *n, FILE *stream) {
+    char *bufptr = NULL;
+    char *p = bufptr;
+    size_t size;
+    int c;
+
+    if (lineptr == NULL) {
+        return -1;
+    }
+    if (stream == NULL) {
+        return -1;
+    }
+    if (n == NULL) {
+        return -1;
+    }
+    bufptr = *lineptr;
+    size = *n;
+
+    c = fgetc(stream);
+    if (c == EOF) {
+        return -1;
+    }
+    if (bufptr == NULL) {
+        bufptr = malloc(128);
+        if (bufptr == NULL) {
+            return -1;
+        }
+        size = 128;
+    }
+    p = bufptr;
+    while(c != EOF) {
+        if ((p - bufptr) > (size - 1)) {
+            size = size + 128;
+            bufptr = realloc(bufptr, size);
+            if (bufptr == NULL) {
+                return -1;
+            }
+        }
+        *p++ = c;
+        if (c == '\n') {
+            break;
+        }
+        c = fgetc(stream);
+    }
+
+    *p++ = '\0';
+    *lineptr = bufptr;
+    *n = size;
+
+    return p - bufptr - 1;
+}
+
 int change_position_to_char(FILE * file,int shomare_khat ,int mogheiyat)
 {
     int counter=0;
@@ -305,18 +359,322 @@ void find(char filename[],char string_to_find)
 
 
 }
-void 
-int main() {
-    char filename[]="/root/mff.txt";
-    char a='f';
-    replace_root(filename);
-    int khat=1;
-    int makan=0 ;
-    int size=3;
-    copy(filename,khat,makan,size,a);
-    printf("%s",clipboard);
-    paste(filename,khat,makan);
 
-    printf("\n");
+
+int  grep_for_one_file (char filename[],char string[],int flag_print)
+{
+    FILE* f=fopen(filename,"r");
+   char *temp=NULL;
+    unsigned long long size=0;
+    int ans=0;
+    int counter=0;
+  while(1)
+  {
+      ans=getline(&temp,&size,f);
+
+      if (ans==-1)
+      {
+          free(temp);
+          break;
+
+      }
+
+      if(  strstr(temp,string)!=NULL)
+      {
+         if (flag_print==1)
+         {
+             printf("%s",temp);
+         }
+          counter++;
+      }
+
+
+      size=0;
+      free(temp);
+      temp=NULL;
+
+  }
+    return counter;
+}
+
+
+void comper(char filename1[],char filename2[])
+{
+    FILE *f1=fopen(filename1,"r");
+    FILE *f2=fopen(filename2,"r");
+    char *ans1;
+    char *ans2;
+    int line_number=0;
+    char *str1=NULL,*str2=NULL;
+    unsigned long long  size1=0,size2=0;
+    int result1=0,result2=0;
+
+    while (1)
+    {
+
+        result1=getline(&str1,&size1,f1);
+        result2=getline(&str2,&size2,f2);
+        line_number++;
+        if (result2==-1 || result1==-1)
+        {
+            break;
+        }
+        if (strcmp(str2,str1)!=0) {
+            for (int i = 0; i < 5; i++) {
+                printf("=");
+            }
+            printf("%d", line_number);
+            for (int i = 0; i < 5; i++) {
+                printf("=");
+            }
+            printf("\n");
+            printf("%s", str1);
+            printf("%s", str2);
+
+
+            free(str1);
+            free(str2);
+            size1 = 0;
+            size2 = 0;
+            str1 = NULL;
+            str2 = NULL;
+        }
+    }
+
+    if (result1==-1 && result2!=-1)
+    {
+        int line_of_end=line_number;
+        int ch1=0;
+        int ch2=0;
+        int cersor2;
+        cersor2=ftell(f2);
+        for (;;)
+        {
+           ch1 = fgetc(f2);
+
+            if (ch1=='\n')
+            {
+                line_of_end++;
+            }
+
+            if (ch1 == EOF)
+            {
+                if (ch2=='\n')
+                {
+                    break;
+                }
+                else
+                {
+                    line_of_end++;
+                    break;
+                }
+
+            }
+            ch2=ch1;
+        }
+        fseek(f2,cersor2,SEEK_SET);
+        for (int i=0;i<=5;i++)
+        {
+            printf(">");
+        }
+        printf("%d",line_number);
+        printf("_");
+        printf("%d",line_of_end);
+        for (int i=0;i<=5;i++)
+        {
+            printf(">");
+        }
+        printf("\n");
+        printf("%s",str2);
+       for(int i=0;;i++)
+       {
+           int ch ;
+           ch=fgetc(f2);
+           if (ch==EOF)
+           {
+               break;
+           }
+           else
+           {
+               printf("%c",ch);
+           }
+       }
+
+    }
+    if (result2==-1 && result1!=-1)
+    {
+        int line_of_end=line_number;
+        int ch1=0;
+        int ch2=0;
+        int cersor1;
+        cersor1=ftell(f1);
+        for (;;)
+        {
+            ch1 = fgetc(f1);
+
+            if (ch1=='\n')
+            {
+                line_of_end++;
+            }
+
+            if (ch1 == EOF)
+            {
+                if (ch2=='\n')
+                {
+                    break;
+                }
+                else
+                {
+                    line_of_end++;
+                    break;
+                }
+            }
+            ch2=ch1;
+        }
+        fseek(f1,cersor1,SEEK_SET);
+        for (int i=0;i<=5;i++)
+        {
+            printf("<");
+        }
+        printf("%d",line_number);
+        printf("_");
+        printf("%d",line_of_end);
+        for (int i=0;i<=5;i++)
+        {
+            printf("<");
+        }
+        printf("\n");
+        printf("%s",str1);
+        for(int i=0;;i++)
+        {
+            int ch ;
+            ch=fgetc(f1);
+            if (ch==EOF)
+            {
+                break;
+            }
+            else
+            {
+                printf("%c",ch);
+            }
+        }
+
+    }
 
 }
+
+char*  chang_filename_to_backupname(char filename[],char ans[])
+{
+    char * pointer1;
+    char *pointer2=&filename[0];
+    pointer1=strrchr(filename,'/');
+    int index=pointer1-pointer2;
+    int i=0;
+    for (;i<index;i++)
+    {
+        ans[i]=filename[i];
+    }
+    ans[i]=0;
+    char *pointer3=filename+i+1;
+    strcat(ans,"/.");
+    strcat(ans,pointer3);
+
+
+
+
+
+    strcat(ans,file);
+
+    return ans;
+
+}
+
+void create_backup(char filename[])
+{
+    char ans[10000];
+    chang_filename_to_backupname(filename,ans);
+    FILE* f1=fopen(filename,"r");
+    FILE* f2=fopen(ans,"w");
+    for (int i=0;;i++)
+    {
+        int ch=0;
+        ch =fgetc(f1);
+        if (ch==EOF)
+        {
+            break;
+        }
+        fputc(ch,f2);
+    }
+    fclose(f1);
+    fclose(f2);
+}
+
+void undo(char filename[])
+{
+    char ans[100000];
+    chang_filename_to_backupname(filename,ans);
+    FILE*f=fopen(ans,"r");
+    if (f==NULL)
+    {
+        printf("taghirnadadi chio barghardonm?");
+        return;
+    }
+    FILE *f1=fopen(filename,"r");
+    FILE *f2;
+    long long size=size_of_file(f1);
+   char *temp=malloc(size_of_file(f1)*sizeof(char));
+   int ch=0;
+   for(int i=0;i<size;i++)
+   {
+       ch=fgetc(f1);
+       temp[i]=ch;
+       printf("%c",temp[i]);
+   }
+
+   fclose(f1);
+   f2=fopen(ans,"r");
+   f1=fopen(filename,"w");
+   for(int i;;i++)
+   {
+       int a=0;
+       a=fgetc(f2);
+       if(a==EOF)
+       {
+           break;
+       }
+
+       fputc(a,f1);
+   }
+   fclose(f2);
+   fclose(f1);
+   f2=fopen(ans,"w");
+   for(int i=0;i<size;i++)
+   {
+       fputc(temp[i],f2);
+   }
+   fclose(f2);
+   free(temp);
+
+
+}
+
+void 
+
+int main() {
+    char filename[]="/root/mff.txt";
+    char filename2[]="/root/test2.txt";
+    char str[5]="slm";
+    char a='f';
+    replace_root(filename);
+    replace_root(filename2);
+    int khat=1;
+    int makan=0 ;
+    int size;
+    char ans[1000];
+    create_backup(filename);
+
+
+
+}
+
+
