@@ -6,7 +6,67 @@
 #include <errno.h>
 char *clipboard;
 int  position;
+char Readname(char path[])
+{
+    path[0] = getchar();
+    if (path[0] != '"')
+    {
+        ungetc(path[0], stdin);
+        int i = 0;
+        while (1)
+        {
+            path[i] = getchar();
+            if (path[i] == ' ' || path[i] == '\n' || path[i] == EOF)
+            {
+                char tmp = path[i];
+                path[i] = '\0';
+                return tmp;
 
+            }
+            else if (path[i] == '\\')
+            {
+                char ch = getchar();
+                if (ch == 'n') path[i] = '\n';
+                else if (ch == '"') path[i] = '"';
+                else if (ch == '\\') path[i] = '\\';
+                else path[++i] = ch;
+                i++;
+            }
+            else
+            {
+                i++;
+            }
+        }
+    }
+    else
+    {
+        int i = 0;
+        while (1)
+        {
+            path[i] = getchar();
+            if (path[i] == '"')
+            {
+                path[i] = '\0';
+                break;
+            }
+            else if (path[i] == '\\')
+            {
+                char ch = getchar();
+                if (ch == 'n') path[i] = '\n';
+                else if (ch == '"') path[i] = '"';
+                else if (ch == '\\') path[i] = '\\';
+                else path[++i] = ch;
+                i++;
+            }
+            else
+            {
+                i++;
+            }
+        }
+
+        return getchar();
+    }
+}
 
 int isFile(const char* name)
 {
@@ -369,7 +429,7 @@ void paste(char filename[],int line_of_start,int char_of_start)
     insert(clipboard,filename,line_of_start,char_of_start);
 }
 
-void find(char filename[],char string_to_find)
+void find(char filename[],char string_to_find[])
 {
     FILE*f=fopen(filename,"r");
 
@@ -670,8 +730,17 @@ void undo(char filename[])
 
 }
 
-void tree(char path[],int tab_num)
+void tree(char path[],int tab_num, int depth)
 {
+    if (depth<-1)
+    {
+        printf("dari eshteba mizani");
+        return;
+    }
+    if (tab_num<depth)
+    {
+        return;
+    }
     chdir(path);
     struct dirent *de;
     DIR* dir=opendir(".");
@@ -703,7 +772,7 @@ void tree(char path[],int tab_num)
                 continue;
             }
 
-            tree(de->d_name,tab_num+1);
+            tree(de->d_name,tab_num+1,depth);
 
         }
         chdir("..");
@@ -713,19 +782,258 @@ void tree(char path[],int tab_num)
     closedir(dir);
 }
 
-int main() {
-    char filename[]="/root/";
-    char filename2[]="/root/test2.txt";
-    char str[5]="slm";
-    char a='f';
-    replace_root(filename);
-    replace_root(filename2);
-    int khat=1;
-    int makan=0 ;
-    int size;
-    char ans[1000];
-   tree(filename,0);
-   
+
+void parser()
+{
+    printf("2");
+    while(1)
+    {
+        printf("2");
+        char dastorat[100];
+        scanf("%s",dastorat);
+        if (strcmp(dastorat,"createfile")==0)
+        {
+            char samp[20];
+            scanf("%s",samp);
+            char path[10000];
+            Readname(path);
+            replace_root(path);
+            create_file(path);
+
+        }
+        else if(strcmp(dastorat,"insert")==0)
+        {
+            char samp[20];
+            char samp2[20];
+            char samp3[20];
+            char path_file[10000000];
+            char path_str[1000000];
+            int line_of_start;
+            int char_of_start;
+            scanf("%s",samp);
+            Readname(path_file);
+            replace_root(path_file);
+            scanf("%s",samp2);
+            Readname(path_str);
+            scanf("%s",samp3);
+            scanf("%d",&line_of_start);
+            getchar();
+            scanf("%d",&char_of_start);
+            insert(path_str,path_file,line_of_start,char_of_start);
+
+        }
+
+
+    else if(strcmp(dastorat,"cat")==0)
+    {
+        char samp[20];
+        scanf("%s",samp);
+        char path[10000];
+        Readname(path);
+        cat(path);
+
+    }
+    else if (strcmp(dastorat,"removestr")==0)
+    {
+        char samp[20];
+        char samp2[20];
+        char samp3[20];
+        char samp4[20];
+        char samp5[20];
+        char path_file[10000000];
+        int line_of_start;
+        int char_of_start;
+        int number_of_char;
+        char flag;
+        scanf("%s",samp);
+        Readname(path_file);
+        replace_root(path_file);
+        scanf("%s",samp2);
+        scanf("%d",&line_of_start);
+        getchar();
+        scanf("%d",&char_of_start);
+        scanf("%s",samp3);
+        scanf("%s",number_of_char);
+        getchar();
+        scanf("%c",flag);
+        remove1(path_file,line_of_start,char_of_start,number_of_char,flag);
+
+    }
+    else if(strcmp(dastorat,"copystr")==0)
+    {
+        char samp[20];
+        char samp2[20];
+        char samp3[20];
+        char samp4[20];
+        char samp5[20];
+        char path_file[10000000];
+        int line_of_start;
+        int char_of_start;
+        int number_of_char;
+        char flag;
+        scanf("%s",samp);
+        Readname(path_file);
+        replace_root(path_file);
+        scanf("%s",samp2);
+        scanf("%d",&line_of_start);
+        getchar();
+        scanf("%d",&char_of_start);
+        scanf("%s",samp3);
+        scanf("%s",number_of_char);
+        getchar();
+        scanf("%c",flag);
+        copy(path_file,line_of_start,char_of_start,number_of_char,flag);
+    }
+
+    else if(strcmp(dastorat,"cutstr")==0)
+    {
+        char samp[20];
+        char samp2[20];
+        char samp3[20];
+        char samp4[20];
+        char samp5[20];
+        char path_file[10000000];
+        int line_of_start;
+        int char_of_start;
+        int number_of_char;
+        char flag;
+        scanf("%s",samp);
+        Readname(path_file);
+        replace_root(path_file);
+        scanf("%s",samp2);
+        scanf("%d",&line_of_start);
+        getchar();
+        scanf("%d",&char_of_start);
+        scanf("%s",samp3);
+        scanf("%s",number_of_char);
+        getchar();
+        scanf("%c",&flag);
+        cut(path_file,line_of_start,char_of_start,number_of_char,flag);
+    }
+    else if (strcmp(dastorat,"pastestr")==0)
+    {
+        char samp[20];
+        char samp2[20];
+        char path_file[10000000];
+        int line_of_start;
+        int char_of_start;
+        scanf("%s",samp);
+        Readname(path_file);
+        replace_root(path_file);
+        scanf("%s",samp2);
+        scanf("%d",&line_of_start);
+        getchar();
+        scanf("%d",&char_of_start);
+    }
+
+    else if (strcmp(dastorat,"find")==0)
+    {
+        char samp[20];
+        char samp2[20];
+        char path_file[10000000];
+        char path_str[1000000];
+        scanf("%s",samp);
+        Readname(path_file);
+        replace_root(path_file);
+        scanf("%s",samp2);
+        Readname(path_str);
+        find(path_file,path_str);
+    }
+
+    else if (strcmp(dastorat,"replace")==0)
+    {
+        char samp[20];
+        char samp2[20];
+        char  samp3[20];
+        char path_str1[10000];
+        char path_str2[10000];
+        char path_file[10000];
+        char flag[2];
+        scanf("%s",samp);
+        Readname(path_str1);
+        scanf("%s",samp2);
+        Readname(path_str2);
+        scanf("%s",samp3);
+        Readname(path_file);
+        replace_root(path_file);
+        getchar();
+        scanf("%s",flag);
+
+    }
+
+    else if (strcmp(dastorat,"grep")==0)
+    {
+        char option[20];
+        char samp[20];
+        char samp2[20];
+        char path_str[10000];
+        int counter=0;
+        scanf("%s",option);
+        if (strcmp(option,"-c")==0)
+        {
+            scanf("%s",samp);
+            Readname(path_str);
+            scanf("%s",samp2);
+            while(1)
+            {
+                char path_file[10000];
+                Readname(path_file);
+                replace_root(path_file);
+                if (Readname(path_file)=='\n')
+                {
+                    break;
+                }
+                counter+=grep_for_one_file(path_file,path_str,0);
+            }
+                printf("%d",counter);
+
+        }
+        else if (strcmp(option,"-l")==0)
+        {
+            scanf("%s",samp);
+            Readname(path_str);
+            scanf("%s",samp2);
+            while(1)
+            {
+                char path_file[10000];
+                Readname(path_file);
+                replace_root(path_file);
+                if (Readname(path_file)=='\n')
+                {
+                    break;
+                }
+
+            }
+        }
+        else if (strcmp(option,"--str")==0)
+        {
+            Readname(path_str);
+            scanf("%s",samp2);
+            while(1)
+            {
+                char path_file[10000];
+                Readname(path_file);
+                replace_root(path_file);
+                if (Readname(path_file)=='\n')
+                {
+                    break;
+                }
+                grep_for_one_file(path_file,path_str,1);
+
+            }
+        }
+        else
+        {
+            printf("chi mighi zabon baste");
+        }
+    }
+}
 }
 
+
+
+int main ()
+{
+    parser();
+}
 
