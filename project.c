@@ -116,7 +116,7 @@ int isFile(const char* name)
 
 }
 
-size_t getline(char **lineptr, size_t *n, FILE *stream) {
+/*size_t getline(char **lineptr, size_t *n, FILE *stream) {
     char *bufptr = NULL;
     char *p = bufptr;
     size_t size;
@@ -166,7 +166,7 @@ size_t getline(char **lineptr, size_t *n, FILE *stream) {
     *n = size;
 
     return p - bufptr - 1;
-}
+}*/
 
 int change_position_to_char(FILE * file,int shomare_khat ,int mogheiyat)
 {
@@ -242,7 +242,7 @@ void create_file(char *str)
         if (newtoken != NULL)
         {
             strcat(str2, token);
-            mkdir(str2);
+            mkdir(str2,0775);
             strcat(str2, "/");
         }
         else
@@ -320,12 +320,16 @@ void cat (char filename[])
     }
 
     f=fopen(filename,"r");
-        while(a!=EOF)
+        while(1)
         {
             a=fgetc(f);
+            if (a==EOF)
+            {
+                break;
+            }
             printf("%c",a);
         }
-        printf("dighe chikar konm barat mohandes:\n ");
+        printf("\ndighe chikar konm barat mohandes:\n ");
 
     fclose(f);
 }
@@ -435,10 +439,10 @@ void copy(char filename[],int line_of_start,int char_of_start,int size, char fla
         {
             if (position+size<= size_of_file(f))
             {
-                position=10;
+            
                 fseek(f, position, SEEK_SET);
                 fread(clipboard, sizeof(char), size, f);
-                printf("%d %d %d\n",clipboard[0],size,position);
+           
 
             }
             else
@@ -476,28 +480,195 @@ void copy(char filename[],int line_of_start,int char_of_start,int size, char fla
 
 void cut(char filename[],int line_of_start,int char_of_start,int size , char flag)
 {
+   
     copy(filename,line_of_start,char_of_start,size,flag);
     remove1(filename,line_of_start,char_of_start,size,flag);
+    
 }
+
 
 void paste(char filename[],int line_of_start,int char_of_start)
 {
     insert(clipboard,filename,line_of_start,char_of_start);
 }
 
-void find(char filename[],char string_to_find[])
+int number_of_worad(char str[],int index)
 {
+    int counter=0;
+    for(int i=1;i<index;i++)
+    {
+        if (isspace(str[i])&& !isspace(str[i-1]))
+        {
+            counter++;
+        }
+    }
+    return counter;
+}
+
+void find(char filename[],char string_to_find[],int at,int all,int bw,int count)
+{
+
+    if (check_path(filename)==-1)
+    {
+        return;
+    }
+    if(check_file(filename)==-1)
+    {
+        return;
+    }
     FILE*f=fopen(filename,"r");
+    long long int size =size_of_file(f);
+    char*pointer=malloc((size+1)*sizeof(char));
+    int *temp=malloc(size*sizeof(int));
+    int index=0;
+    fread(pointer,size,sizeof(char),f);
+    pointer[size]='\0';
+    char* found=strstr(pointer,string_to_find);
+    while(found!=NULL)
+    {
+        temp[index]=found-pointer;
+
+        found=strstr((pointer+temp[index]+1),string_to_find);
+        index++;
+
+
+    }
+    if(index==0 || at>index)
+    {
+        printf("not found");
+    }
+     else  if(count==1)
+    {
+        printf("%d",index);
+    
+    }
+    else if (all==1)
+    {
+        if (bw==1)
+        {
+            for (int i=0;i<index;i++)
+        {
+            printf("%d",number_of_worad(pointer,temp[i]));
+        }
+        }
+        else 
+        {
+        for (int i=0;i<index;i++)
+        {
+            printf("%d\n",temp[i]);
+        }
+        }
+    }
+    else if (at)
+    {
+        if (bw==1)
+        {
+            printf("%d/n",number_of_worad(pointer,temp[at-1]));
+        }
+        else
+        {
+        printf("%d",temp[at-1]);
+        }
+    }
+
+    else
+    {
+        if (bw==1)
+        {
+            printf("%d",number_of_worad(pointer,temp[0]));
+        }
+        else
+        {
+        printf("%d",temp[0]);
+        }
+    }
+
+    free(temp);
+    free(pointer);
+    fclose(f);
+    
+
 
 
 }
 
+void replace_remove(int index ,char str[],int size)
+{
+    memmove(str+index,str+index+size,strlen(str+index+size)+1);
+}
+
+void replace_insert(char str[],char str2[],int index)
+{
+    int size=strlen(str2);
+    memmove(str+index+size,str+index,strlen(str+index)+1);
+    memcpy(str+index,str2,size);
+
+}
+void replace(char str1[],char str2[],char filename[],int at,int all)
+{
+    if (check_path(filename)==-1)
+    {
+        return;
+    }
+    if(check_file(filename)==-1)
+    {
+        return;
+    }
+    FILE*f=fopen(filename,"r");
+    long long int size =size_of_file(f);
+    char*pointer=malloc((size+10000)*sizeof(char));
+    int *temp=malloc(size*sizeof(int));
+    int index=0;
+    fread(pointer,size,sizeof(char),f);
+    pointer[size]='\0';
+    char* found=strstr(pointer,str1);
+    while(found!=NULL)
+    {
+        temp[index]=found-pointer;
+
+        found=strstr((pointer+temp[index]+1),str1);
+        index++;
+
+    }
+    if (index==0 || at>index)
+    {
+        printf("not found");
+    }
+    else if (at !=0)
+    {
+       replace_remove(temp[at-1],pointer,strlen(str1));
+       replace_insert(pointer,str2,temp[at-1
+       ]);
+    }
+    else if (all==1)
+    {
+        for (int i=index-1;i>=0;i--)
+        {
+            replace_remove(temp[i],pointer,strlen(str1));
+            replace_insert(pointer,str2,temp[i]);
+
+        }
+    }
+    else 
+    {
+        replace_remove(temp[0],pointer,strlen(str1));
+            replace_insert(pointer,str2,temp[0]);
+
+    }
+    
+    fclose(f);
+    f=fopen(filename,"w");
+    fprintf(f,pointer);
+    free(temp);
+    free(pointer);
+    fclose(f);
+}
 
 int  grep_for_one_file (char filename[],char string[],int flag_print)
 {
     FILE* f=fopen(filename,"r");
    char *temp=NULL;
-    unsigned long long size=0;
+    size_t size=0;
     int ans=0;
     int counter=0;
     if (check_path(filename)==-1)
@@ -1022,8 +1193,10 @@ void parser()
         scanf("%s",samp3);
         scanf("%d",&number_of_char);
         getchar();
+        getchar();
         scanf("%c",&flag);
         cut(path_file,line_of_start,char_of_start,number_of_char,flag);
+        printf("%s",clipboard);
     }
     else if (strcmp(dastorat,"pastestr")==0)
     {
@@ -1039,7 +1212,6 @@ void parser()
         scanf("%d",&line_of_start);
         getchar();
         scanf("%d",&char_of_start);
-        printf("%s",clipboard);
         paste(path_file,line_of_start,char_of_start);
 
     }
@@ -1051,6 +1223,11 @@ void parser()
         char option[20];
         char path_file[MAX_SIZE];
         char path_str[MAX_SIZE];
+        int co=0;
+        int al=0;
+        int bw=0;
+        int at=0;
+        int number_in_at;
         scanf("%s",samp);
         Readname(path_file);
         replace_root(path_file);
@@ -1060,30 +1237,87 @@ void parser()
 
         while(temp!='\n')
         {
-            Readname(option);
+            temp=Readname(option);
+            if (strcmp(option,"-count")==0)
+            {
+                co=1;
+            }
+            else if (strcmp(option,"-all")==0)
+            {
+                al=1;
+            }
+            else if (strcmp(option,"-at")==0)
+            {
+               scanf("%d",&number_in_at);
+               at=1;
+            }
+            else if (strcmp(option,"-byword")==0)
+            {
+                bw=1;
+            }
+
         }
-        find(path_file,path_str);
+        if ((co==1 && (at==1 || al==1 || bw==1)) ||(at==1 && al==1))
+        {
+            printf("option eshtebah");
+            continue;
+        }
+     
+
+        find(path_file,path_str,number_in_at,al,bw,co);
     }
 
     else if (strcmp(dastorat,"replace")==0)
     {
+      
         char samp[20];
         char samp2[20];
-        char  samp3[20];
-        char path_str1[MAX_SIZE];
-        char path_str2[MAX_SIZE];
+        char option[20];
         char path_file[MAX_SIZE];
-        char flag[2];
+        char path_str[MAX_SIZE];
+        char path_str2[MAX_SIZE];
+        int co=0;
+        int all=0;
+        int bw=0;
+        int at=0;
+        int number_in_at;
         scanf("%s",samp);
-        Readname(path_str1);
-        scanf("%s",samp2);
-        Readname(path_str2);
-        scanf("%s",samp3);
         Readname(path_file);
         replace_root(path_file);
-        getchar();
-        scanf("%s",flag);
+        scanf("%s",samp2);
+        Readname(path_str);
+        scanf("%s",samp);
+        char temp=Readname(path_str2);
+        while(temp!='\n')
+        {
+            temp=Readname(option);
+            if (strcmp(option,"-count")==0)
+            {
+                co=1;
+            }
+            else if (strcmp(option,"-all")==0)
+            {
+                all=1;
+            }
+            else if (strcmp(option,"-at")==0)
+            {
+               scanf("%d",&number_in_at);
+               at=1;
+            }
+            else if (strcmp(option,"-byword")==0)
+            {
+                bw=1;
+            }
 
+
+        }
+        if ((co==1 && (at==1 || all==1 || bw==1)) ||(at==1 && all==1))
+        {
+            printf("option eshtebah");
+            continue;
+        }
+     
+        replace(path_str,path_str2,path_file,number_in_at,all);
     }
 
     else if (strcmp(dastorat,"grep")==0)
@@ -1153,6 +1387,8 @@ void parser()
         }
 
     }
+
+
         else
         {
             printf("%s\n",dastorat);
@@ -1165,25 +1401,8 @@ void parser()
 
 int main ()
 {
-   /* char filename[20]="/root/mff.txt";
-    replace_root(filename);
-    int line =3;
-    int char_of_strt=0;
-    int size =4;
-    char a='f';
-    copy(filename,line,char_of_strt,size,a);
-    printf("%s",clipboard);*/
-    FILE *f = fopen("root/mff.txt", "r");
-    for (int i = 0; i < 20; i++)
-    {
-        char ch = fgetc(f);
-        printf("%d ", ch);
-    }
-    printf("\n");
-    fseek(f,11,SEEK_SET);
-    printf("%d\n",fgetc(f));
-    int y=change_position_to_char(f,2,0);
-    printf("%d",y);
-    fclose(f);
+   
+   parser();
+    
 }
 
