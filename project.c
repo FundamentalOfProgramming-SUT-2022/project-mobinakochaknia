@@ -1048,13 +1048,20 @@ void parser()
     {
         char samp[20];
         char samp2[20];
+        char option[20];
         char path_file[MAX_SIZE];
         char path_str[MAX_SIZE];
         scanf("%s",samp);
         Readname(path_file);
         replace_root(path_file);
         scanf("%s",samp2);
-        Readname(path_str);
+        char temp =Readname(path_str);
+
+
+        while(temp!='\n')
+        {
+            Readname(option);
+        }
         find(path_file,path_str);
     }
 
