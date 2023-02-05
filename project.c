@@ -1053,7 +1053,7 @@ void aut_indent (char filename[])
     {
         return;
     }
-    if (check_file(filename))
+    if (check_file(filename)==-1)
     {
         return;
     }
@@ -1067,7 +1067,6 @@ void aut_indent (char filename[])
 
     fread(reserv,size,sizeof(char),f);
     reserv[size]=0;
-    printf("%s",reserv);
     for( int i=0;reserv[i]!='\0';)
     {
         if (reserv[i]=='{'|| reserv[i]=='}')
@@ -1097,16 +1096,15 @@ void aut_indent (char filename[])
             i++;
         }
     }
-
+    int ln=index ;
     memcpy(reserv,str2,index);
     reserv[index]=0;
-    printf("%s",reserv);
     index=0;
     for (int i=0;reserv[i]!='\0';i++)
     {
-        if(reserv[i]='{')
+        if(reserv[i]=='{')
         {
-            if (reserv[i-1]!='}' || reserv[i-1]!='{')
+            if (i>0 && reserv[i-1]!='}' && reserv[i-1]!='{')
             {
                 str2[index]=' ';
                 index++;
@@ -1116,9 +1114,9 @@ void aut_indent (char filename[])
             str2[index]='\n';
             index++;
              tab_num++;
-            if (reserv[i+1]!='}')
+            if (i+1<ln && reserv[i+1]!='}')
             {
-                for (int k=0;k<=tab_num;k++)
+                for (int k=0;k<tab_num;k++)
             {
                 str2[index]='\t';
                 index++;
@@ -1126,15 +1124,15 @@ void aut_indent (char filename[])
             }
         }
 
-        else if (reserv[i]='}')
+        else if (reserv[i]=='}')
         {
-            if (reserv[i-1]!='}' || reserv[i-1]!='{')
+            if ( i>0 && reserv[i-1]!='}' && reserv[i-1]!='{')
             {
                 str2[index]='\n';
                 index++;
             }
             tab_num--;
-            for (int p=0;p<=tab_num;p++)
+            for (int p=0;p<tab_num;p++)
             {
                 str2[index]='\t';
                 index++;
@@ -1144,9 +1142,9 @@ void aut_indent (char filename[])
             str2[index]='\n';
             index++;
             
-            if (reserv[i+1]!='}')
+            if (i+1<ln && reserv[i+1]!='}')
             {
-            for (int p=0;p<=tab_num;p++)
+            for (int p=0;p<tab_num;p++)
             {
                 str2[index]='\t';
                 index++;
