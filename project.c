@@ -709,7 +709,7 @@ int  grep_for_one_file (char filename[],char string[],int flag_print)
 }
 
 
-void comper(char filename1[],char filename2[])
+void compare(char filename1[],char filename2[])
 {
     if (check_path(filename1)==-1)
     {
@@ -727,13 +727,14 @@ void comper(char filename1[],char filename2[])
     {
         return;
     }
+
     FILE *f1=fopen(filename1,"r");
     FILE *f2=fopen(filename2,"r");
     char *ans1;
     char *ans2;
     int line_number=0;
     char *str1=NULL,*str2=NULL;
-    unsigned long long  size1=0,size2=0;
+    size_t size1=0,size2=0;
     int result1=0,result2=0;
 
 
@@ -755,7 +756,6 @@ void comper(char filename1[],char filename2[])
             for (int i = 0; i < 5; i++) {
                 printf("=");
             }
-            printf("\n");
             printf("%s", str1);
             printf("%s", str2);
 
@@ -773,7 +773,7 @@ void comper(char filename1[],char filename2[])
     {
         int line_of_end=line_number;
         int ch1=0;
-        int ch2=0;
+        int ch2='\n';
         int cersor2;
         cersor2=ftell(f2);
         for (;;)
@@ -833,9 +833,10 @@ void comper(char filename1[],char filename2[])
     {
         int line_of_end=line_number;
         int ch1=0;
-        int ch2=0;
+        int ch2='\n';
         int cersor1;
         cersor1=ftell(f1);
+        
         for (;;)
         {
             ch1 = fgetc(f1);
@@ -956,13 +957,17 @@ void undo(char filename[])
     long long size=size_of_file(f1);
    char *temp=malloc(size_of_file(f1)*sizeof(char));
    int ch=0;
-   for(int i=0;i<size;i++)
-   {
-       ch=fgetc(f1);
-       temp[i]=ch;
-       printf("%c",temp[i]);
-   }
 
+    for (int i=0;;i++)
+    {
+        int ch =fgetc(f1);
+        if (ch==EOF)
+        {
+            break;
+        }
+        temp[i]=ch;
+
+    }
    fclose(f1);
    f2=fopen(ans,"r");
    f1=fopen(filename,"w");
@@ -1042,36 +1047,135 @@ void tree(char path[],int tab_num, int depth)
     closedir(dir);
 }
 
-void uto_index(char filename[])
+void aut_indent (char filename[])
 {
-    FILE *f=fopen(filename,"r");
-    while (1)
+    if (check_path(filename)==-1)
     {
-        int ch;
-        ch=fgetc(f);
-        if (ch == EOF)
-        {
-            return;
-        }
-        if (ch =='{')
-        {
-            while (1)
-            {
-                int ch2;
-                ch2=fgetc(f);
+        return;
+    }
+    if (check_file(filename))
+    {
+        return;
+    }
+    FILE *f=fopen(filename,"r");
+    int size =size_of_file(f);
+    char *reserv =malloc((size+10000)*sizeof(char));
 
+    char *str2=malloc((size+10000)*sizeof(char));
+    int index=0;
+    int tab_num=0;
+
+    fread(reserv,size,sizeof(char),f);
+    reserv[size]=0;
+    printf("%s",reserv);
+    for( int i=0;reserv[i]!='\0';)
+    {
+        if (reserv[i]=='{'|| reserv[i]=='}')
+        {
+            while(index>0 && str2[index-1]==' ')
+            {
+                index--;
+            }    
+
+            str2[index]=reserv[i];
+
+            index++;
+            i++;
+            while (reserv[i]==' ')
+            {
+                i++;
             }
+
+        }
+
+       
+
+        else 
+        {
+            str2[index]=reserv[i];
+            index++;
+            i++;
         }
     }
+
+    memcpy(reserv,str2,index);
+    reserv[index]=0;
+    printf("%s",reserv);
+    index=0;
+    for (int i=0;reserv[i]!='\0';i++)
+    {
+        if(reserv[i]='{')
+        {
+            if (reserv[i-1]!='}' || reserv[i-1]!='{')
+            {
+                str2[index]=' ';
+                index++;
+            }
+            str2[index]=reserv[i];
+            index++;
+            str2[index]='\n';
+            index++;
+             tab_num++;
+            if (reserv[i+1]!='}')
+            {
+                for (int k=0;k<=tab_num;k++)
+            {
+                str2[index]='\t';
+                index++;
+            }
+            }
+        }
+
+        else if (reserv[i]='}')
+        {
+            if (reserv[i-1]!='}' || reserv[i-1]!='{')
+            {
+                str2[index]='\n';
+                index++;
+            }
+            tab_num--;
+            for (int p=0;p<=tab_num;p++)
+            {
+                str2[index]='\t';
+                index++;
+            }
+            str2[index]=reserv[i];
+            index++;
+            str2[index]='\n';
+            index++;
+            
+            if (reserv[i+1]!='}')
+            {
+            for (int p=0;p<=tab_num;p++)
+            {
+                str2[index]='\t';
+                index++;
+            }
+            }
+        }
+        else 
+        {
+            str2[index]=reserv[i];
+            index++;
+        }
+    }
+    
+    fclose(f);
+    f=fopen(filename,"w");
+    fwrite(str2,sizeof (char),index,f);
+    fclose(f);
+    free(reserv);
+    free(str2);
 }
 
-
+//================================================parser=============================================================
 void parser()
 {
     while(1)
     {
         char dastorat[100];
         scanf("%s",dastorat);
+
         if (strcmp(dastorat,"createfile")==0)
         {
             char samp[20];
@@ -1080,9 +1184,10 @@ void parser()
             Readname(path);
             replace_root(path);
             create_file(path);
+            
 
         }
-        else if(strcmp(dastorat,"insert")==0)
+        else if(strcmp(dastorat,"insertstr")==0)
         {
             char samp[20];
             char samp2[20];
@@ -1100,6 +1205,7 @@ void parser()
             scanf("%d",&line_of_start);
             getchar();
             scanf("%d",&char_of_start);
+            create_backup(path_file);
             insert(path_str,path_file,line_of_start,char_of_start);
 
         }
@@ -1140,6 +1246,7 @@ void parser()
         getchar();
         scanf("%c",&flag);
         printf("%c",flag);
+        create_backup(path_file);
         remove1(path_file,line_of_start,char_of_start,number_of_char,flag);
 
     }
@@ -1195,8 +1302,9 @@ void parser()
         getchar();
         getchar();
         scanf("%c",&flag);
+        create_backup(path_file);
         cut(path_file,line_of_start,char_of_start,number_of_char,flag);
-        printf("%s",clipboard);
+    
     }
     else if (strcmp(dastorat,"pastestr")==0)
     {
@@ -1212,6 +1320,7 @@ void parser()
         scanf("%d",&line_of_start);
         getchar();
         scanf("%d",&char_of_start);
+        create_backup(path_file);
         paste(path_file,line_of_start,char_of_start);
 
     }
@@ -1316,7 +1425,7 @@ void parser()
             printf("option eshtebah");
             continue;
         }
-     
+        create_backup(path_file);
         replace(path_str,path_str2,path_file,number_in_at,all);
     }
 
@@ -1388,11 +1497,54 @@ void parser()
 
     }
 
+    else if (strcmp(dastorat,"tree")==0)
+    {
+        int depth;
+        char str[6]="root";
+        getchar();
+        scanf("%d",&depth);
+        getchar();
+        tree(str,0,depth);
+    }
 
+    else if (strcmp(dastorat,"compare")==0)
+
+    {
+        char path_file1[MAX_SIZE];
+        char path_file2[MAX_SIZE];
+        Readname(path_file1);
+        replace_root(path_file1);
+        Readname(path_file2);
+        printf("%s\n",path_file2);
+        replace_root(path_file2);
+        compare(path_file1,path_file2);
+    }
+
+    else if (strcmp(dastorat,"undo")==0)
+    {
+        char samp[10];
+        char path_file[MAX_SIZE];
+        scanf("%s",samp);
+        Readname(path_file);
+        replace_root(path_file);
+        undo(path_file);
+
+    }
+
+    else if (strcmp(dastorat,"autoindent")==0)
+    {
+        char path_file[MAX_SIZE];
+        char samp[7];
+        scanf ("%s",samp);
+        Readname(path_file);
+        replace_root(path_file);
+        aut_indent(path_file);
+
+    }
         else
         {
-            printf("%s\n",dastorat);
-            printf("chi mighi zabon baste");
+    
+            printf("chi mighi zabon baste \n");
         }
 }
 }
